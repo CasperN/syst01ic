@@ -2,9 +2,9 @@ module MatrixMultiply ( clock, reset, matrix_A, matrix_B, matrix_C);
 
 input wire clock;
 input wire reset;
-input matrix_A;
-input matrix_B;
-output reg matrix_C;
+input [127:0] matrix_A;
+input [127:0] matrix_B;
+output reg [127:0] matrix_C;
 
 
 reg [0:7] passer_ready;
