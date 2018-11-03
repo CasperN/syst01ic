@@ -11,13 +11,10 @@ wire [7:0] a_out;
 wire [7:0] b_out;
 wire [7:0] c_out;
 
-
-wire [7:0] counter_out;
-
 // Initialize all variables
 initial begin
-    $display ("time\ta_in\t\tb_in\t\tc_out\t\ta_out\t\tb_out\treset");
-    $monitor ("%g\t %b\t%b\t%b\t%b\t%b\t%b",
+    $display ("time \ta_in\tb_in\tc_out\ta_out\tb_out\treset");
+    $monitor ("%g\t %d\t%d\t%d\t%d\t%d\t%d",
         $time, a_in, b_in, c_out, a_out, b_out, reset
     );
     clock = 1;
@@ -26,14 +23,15 @@ initial begin
     reset = 0;
     a_in = 1;
     b_in = 2;
+    #1 reset = 1;
+
+    #50 reset = 0;
     #1 a_in = 1;
     #4 a_in = 4;
     #10 $finish;
 end
 
-always begin
-    #1 clock = clock + 1;
-end
+always #1 clock = clock + 1;
 
 Element X(clock, reset, a_in, b_in, a_out, b_out, c_out);
 

@@ -11,15 +11,13 @@ output reg [7:0]c;
 
 always @ (posedge clock or negedge reset)
 begin
-    if (~reset) begin
+    if (reset)
+        a <= b <= c <= 0;
+    else begin
         c = c + a_in * b_in;  // reset register
         a <= a_in;
         b <= b_in;
-    end else begin
-        a <= 8'b0;
-        b <= 8'b0;
-        c <= 8'b0;
-    end
+    end 
 end
 
 endmodule
