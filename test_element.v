@@ -35,7 +35,7 @@ always begin
     #1 clock = clock + 1;
 end
 
-Element X(clock, a_in, b_in, reset, a_out, b_out, c_out);
+Element X(clock, reset, a_in, b_in, a_out, b_out, c_out);
 
 
 endmodule

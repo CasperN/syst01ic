@@ -1,4 +1,4 @@
-module Element(clock, a_in, b_in, reset, a, b, c);
+module Element(clock, reset, a_in, b_in, a, b, c);
 
 input wire clock;
 input wire reset;
