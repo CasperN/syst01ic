@@ -1,26 +1,32 @@
 `include "element.v"
 
+// Matrix multiply of N * N matricies using systolic arrays
+module MatrixMultiply #(parameter integer N = 4)
+(clock, reset, matrix_a, matrix_b, matrix_c, complete);
 
-module MatrixMultiply ( clock, reset, matrix_a, matrix_b, matrix_c, complete);
 
 input wire clock;
 input wire reset;
-input wire [0:3][0:3][0:7] matrix_a;
-input wire [0:3][0:3][0:7] matrix_b;
-output wire [0:3][0:3][0:7] matrix_c;
-output reg complete;
+input wire [0:N-1][0:N-1][0:7] matrix_a;
+input wire [0:N-1][0:N-1][0:7] matrix_b;
+output wire [0:N-1][0:N-1][0:7] matrix_c;
+output wire complete;
 
-// Build Systolic array
+// Only advance matrix multiplication when incomplete
+reg [0:7] step;
+assign complete = step == 2 * N - 2; // does it in 2N - 2 steps
+assign matmul_clock = clock & !complete;
+
+// Systolic Array of `c += a * b` Elements
 // note the outside edge wires are connected to nothing.
-wire [0:4][0:4][0:7] a_wire;
-wire [0:4][0:4][0:7] b_wire;
-genvar i;
-genvar j;
+wire [0:N][0:N][0:7] a_wire;
+wire [0:N][0:N][0:7] b_wire;
+genvar i, j;
 generate
-    for (i=0; i<4; i=i+1) begin
-        for (j=0; j<4; j=j+1) begin
-            Element element(
-                clock,
+    for (i=0; i<N; i=i+1) begin
+        for (j=0; j<N; j=j+1) begin
+            Element e(
+                matmul_clock,
                 reset,
                 a_wire[i][j],
                 b_wire[i][j],
@@ -32,30 +38,25 @@ generate
     end
 endgenerate
 
-reg [0:3][0:1] passer_ready;
-reg [0:3][0:1] passer_index;
-
-// TODO passer logic
-// * Only need to count to 3
-// * decrement passer_ready if its not zero
-// * pass and increment index if if passer_ready is zero
-// * somehow associate passers with the array
-// * Dynamic indexing?
-
-
-// Upon reset
-// * Set complete bit to zero
-// * Reset passer state
-// * Reset element registers (handled by Elements themselves)
-always @ ( ~reset ) begin
-    complete <= 0;
-end
-
+// Pass values from input matrices to the computation array
+reg [0:N-1][0:7] a_in;
+reg [0:N-1][0:7] b_in;
 generate
-    for( i=0; i<4; i=i+1 ) begin
-        always @ ( ~reset ) begin
-        passer_ready[i] <= i;
-        passer_index[i] <= 0;
+    for( i=0; i<N; i=i+1) begin
+        always @ (posedge clock or negedge reset) begin
+
+            // Increment step until complete, or reset.
+            step = reset ? 0 : step < 2 * N - 2 ? step + 1 : step;
+
+            // Index into array as appropriate FIXME matrix_b needs transposing
+            if (i <= step && step - i < N) begin
+                a_in[i] <= matrix_a[i][step - i];
+                b_in[i] <= matrix_b[i][step - i];
+
+            // emit zeros if not appropriate
+            end else begin
+                a_in[i] <= b_in[i] <= 0;
+            end
         end
     end
 endgenerate
