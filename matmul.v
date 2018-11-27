@@ -1,8 +1,9 @@
 `include "element.v"
 
 // Matrix multiply of N * N matricies using systolic arrays
+// TODO remove step variable once no longer needed for debugging
 module MatrixMultiply #(parameter integer N = 4)
-(clock, reset, matrix_a, matrix_b, matrix_c, complete);
+(clock, reset, matrix_a, matrix_b, matrix_c, complete, step);
 
 
 input wire clock;
@@ -13,7 +14,7 @@ output wire [0:N-1][0:N-1][0:7] matrix_c;
 output wire complete;
 
 // Only advance matrix multiplication when incomplete
-reg [0:7] step;
+output integer step;
 assign complete = step == 2 * N - 2; // does it in 2N - 2 steps
 assign matmul_clock = clock & !complete;
 
@@ -38,16 +39,17 @@ generate
     end
 endgenerate
 
+// Increment step until complete, or reset.
+always @ (posedge clock or reset) begin
+    step = reset ? 0 : step < 2 * N - 2 ? step + 1 : step;
+end
+
 // Pass values from input matrices to the computation array
 reg [0:N-1][0:7] a_in;
 reg [0:N-1][0:7] b_in;
 generate
     for( i=0; i<N; i=i+1) begin
-        always @ (posedge clock or negedge reset) begin
-
-            // Increment step until complete, or reset.
-            step = reset ? 0 : step < 2 * N - 2 ? step + 1 : step;
-
+        always @ (posedge clock or reset) begin
             // Index into array as appropriate FIXME matrix_b needs transposing
             if (i <= step && step - i < N) begin
                 a_in[i] <= matrix_a[i][step - i];
